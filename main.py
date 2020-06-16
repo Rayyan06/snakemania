@@ -27,6 +27,7 @@ SCREEN_SIZE = 500
 screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
 SCORE = 0
 
+# TODO: MAKE MAP CLASS WITH MAZE
 def showScore(SCORE):
 
     font = pygame.font.Font('freesansbold.ttf', 20)
@@ -42,13 +43,15 @@ def showScore(SCORE):
     screen.blit(text, textRect)
 
 # Number of locks that span a length
-GRID_NUM = 15
+GRID_NUM = 50
+
 GRID_WIDTH = SCREEN_SIZE/GRID_NUM
 LINE_WIDTH = 0
-SNAKE_SPEED = 6
+SNAKE_SPEED = 9
 
 # Colors in the GAME
 BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 WHITE = (255, 255, 255)
@@ -59,6 +62,7 @@ location. """
 
 # Draw the Grid for the map
 def drawMap(screen):
+
     screen.fill(BLACK)
     for x in range(GRID_NUM):
         pygame.draw.line(screen, WHITE, (x*GRID_WIDTH, 0), (x*GRID_WIDTH, GRID_WIDTH*GRID_NUM),\
@@ -68,17 +72,11 @@ def drawMap(screen):
         LINE_WIDTH)
 
 
-
-
-
-
-
-
 class Block:
-    color=GREEN
-    def __init__(self, x, y):
+    def __init__(self, x, y, color):
         self.x = x
         self.y = y
+        self.color = color
 
     def draw(self):
         pygame.draw.rect(screen, self.color, (self.x*GRID_WIDTH, self.y*GRID_WIDTH, GRID_WIDTH, GRID_WIDTH))
@@ -88,15 +86,10 @@ class Block:
             return True
         else:
             return False
-# TODO: Make Apple class a subClass of Block,
-# so we can inherit the functions from block
 
 # Fold this up
-class Apple:
+class Apple(Block):
     color = RED
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
 
     def spawn(self, snake):
         self.x = random.randint(0, GRID_NUM-1)
@@ -105,30 +98,30 @@ class Apple:
             if self.x == segment.x and self.y == segment.y:
                 self.x = random.randint(0, GRID_NUM-1)
                 self.y = random.randint(0, GRID_NUM-1)
-    def draw(self):
-        pygame.draw.rect(screen, self.color, (self.x*GRID_WIDTH, self.y*GRID_WIDTH, GRID_WIDTH, GRID_WIDTH))
 
-    def checkCollision(self, other):
-        if self.x == other.x and self.y == other.y:
-            return True
-        else:
-            return False
 class Snake:
+    color = GREEN
+    def __init__(self):
+        self.spawn()
 
-    def __init__(self, segments):
-        self.segments = segments
-
-        self.head = self.segments[0]
-        self.tail = self.segments[-1]
+    def spawn(self):
         self.direction = 'UP'
         self.nextDirection = self.direction
 
+        self.segments = []
+        self.x = random.randint(0, GRID_NUM)
+        self.y = random.randint(0, GRID_NUM)
+
+        self.length = random.randint(3, 9)
+
+        for block in range(self.length):
+            self.segments.append(Block(self.x, self.y-block, self.color))
+
+        self.head = self.segments[0]
     def draw(self):
         for segment in self.segments:
             segment.draw()
             print(segment.x, segment.y)
-            print("My Stupid Head: ", self.head.x, self.head.y)
-            #print(segment.x, segment.y)
 
     def move(self, apple):
         self.checkMove()
@@ -147,35 +140,23 @@ class Snake:
         if self.direction == 'LEFT':
             newBlock[0] = self.head.x-1
             newBlock[1] = self.head.y
-        newBlock = Block(newBlock[0], newBlock[1])
+
+        newBlock = Block(newBlock[0], newBlock[1], self.color)
+
         self.segments.insert(0, newBlock)
+
         self.head = self.segments[0]
+
         if self.checkAppleCollision(apple):
             pass
         else:
             self.segments.pop(-1)
-        """
-        self.head = self.segments[0]
 
-        if self.direction == 'RIGHT':
-            nextHead = Block(self.head.x+1, self.head.y)
-
-        elif self.direction == 'DOWN':
-            nextHead = Block(self.head.x, self.head.y+1)
-
-        elif self.direction == 'LEFT':
-            nextHead = Block(self.head.x-1, self.head.y)
-
-        elif self.direction == 'UP':
-            nextHead = Block(self.head.x, self.head.y-1)
-
-        self.segments.append(nextHead) # Add our new head
-        self.segments.pop(-1) # Delete the tail(the last element in the array)
-        """
     def collision(self):
         if self.checkWallCollision() or self.checkSelfCollision():
             return True
         else: pass
+
     def checkWallCollision(self):
         if self.head.x > (GRID_NUM-1) or self.head.x < 0 or\
          self.head.y < 0 or self.head.y > (GRID_NUM-1):
@@ -187,19 +168,6 @@ class Snake:
                 print("collided with segment: " + str(self.segments.index(segment)))
                 return True
             else: pass
-    def update(self, keyPressed):
-        if keyPressed==K_LEFT:
-            self.nextDirection = 'LEFT'
-            print('Moving Left!')
-        elif keyPressed == K_UP:
-            self.nextDirection = 'UP'
-            print('Moving Up!')
-        elif keyPressed == K_DOWN:
-            self.nextDirection = 'DOWN'
-            print('Moving Down!')
-        elif keyPressed == K_RIGHT:
-            self.nextDirection = 'RIGHT'
-            print('Moving Right!')
     def checkAppleCollision(self, apple):
         collision = self.head.checkCollision(apple)
         return collision
@@ -216,11 +184,65 @@ class Snake:
         else:
             self.direction = self.nextDirection
 
-snake = Snake(segments=[Block(5, 4), Block(5, 3)])
+class Player(Snake):
+
+    def update(self, keyPressed):
+        if keyPressed==K_LEFT:
+            self.nextDirection = 'LEFT'
+        elif keyPressed == K_UP:
+            self.nextDirection = 'UP'
+        elif keyPressed == K_DOWN:
+            self.nextDirection = 'DOWN'
+        elif keyPressed == K_RIGHT:
+            self.nextDirection = 'RIGHT'
+    def checkEnemyCollision (self, enemy):
+        for block in enemy.segments:
+            if self.head.checkCollision(block):
+                return True
+
+class AI(Snake):
+    color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    direction = 'LEFT'
+
+
+    def __init__(self):
+        super().spawn()
+    def update(self, apple):
+
+        x = self.head.x
+        y = self.head.y
+
+
+        rand = random.random()
+
+        if rand>x/GRID_NUM:
+            self.direction = 'RIGHT'
+        if rand<x/ GRID_NUM:
+            self.direction = 'LEFT'
+        if rand>y/GRID_NUM:
+            self.direction = 'DOWN'
+        if rand<y / GRID_NUM:
+            self.direction = 'UP'
+
+    def checkEnemyCollision(self, enemy):
+        for block in enemy.segments:
+            if self.head.checkCollision(block):
+                return True
+
+
+
+        #self.checkEdge()
+
+snakes = []   # All Snakes, including player and AI
+
+player = Player()
+
+for i in range(0, 1):
+    snakes.append(AI())
+
 clock = pygame.time.Clock()
 
-apple = Apple(0, 0)
-apple.spawn(snake)
+apple = Apple(random.randint(0, GRID_NUM), random.randint(0, GRID_NUM), RED)
 
 
 # Run until game ends
@@ -243,26 +265,45 @@ while running:
             if event.key == K_ESCAPE:
                 # IF it was, then quit the game
                 running = False
-            snake.update(keyPressed=event.key)
+
+            player.update(event.key)
+
+
+
             print(event.key)
 
         elif event.type == QUIT:
             running = False
 
-
+    for snake in snakes:
+        snake.update(apple)
     # Fill the Background with BLACK
     #screen.fill(BLACK)
     drawMap(screen)
 
-    snake.draw()
+    for snake in snakes:
+        snake.draw()
+
+    player.draw()
     apple.draw()
 
-    if snake.collision():
+    for snake in snakes:
+        if snake.collision():
+            break
+        if snake.checkAppleCollision(apple):
+            apple.spawn(player)
+
+    if player.collision() or player.checkEnemyCollision(snakes[0]):
         break
-    if snake.checkAppleCollision(apple):
-        apple.spawn(snake)
-    SCORE = len(snake.segments)
-    snake.move(apple)
+    if player.checkAppleCollision(apple):
+        apple.spawn(player)
+
+    SCORE = len(player.segments)
+    for snake in snakes:
+        snake.move(apple)
+
+    player.move(apple)
+
     showScore(SCORE)
     #time.sleep(1/SNAKE_SPEED)
     #snake.move()
