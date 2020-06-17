@@ -47,7 +47,7 @@ GRID_NUM = 50
 
 GRID_WIDTH = SCREEN_SIZE/GRID_NUM
 LINE_WIDTH = 0
-SNAKE_SPEED = 9
+SNAKE_SPEED = 4
 
 # Colors in the GAME
 BLACK = (0, 0, 0)
@@ -215,14 +215,16 @@ class AI(Snake):
 
         rand = random.random()
 
-        if rand>x/GRID_NUM:
-            self.direction = 'RIGHT'
-        if rand<x/ GRID_NUM:
-            self.direction = 'LEFT'
-        if rand>y/GRID_NUM:
-            self.direction = 'DOWN'
-        if rand<y / GRID_NUM:
-            self.direction = 'UP'
+        if rand > 0.5:
+            if (rand)>x/GRID_NUM:
+                self.direction = 'RIGHT'
+            elif (rand)<x/ GRID_NUM:
+                self.direction = 'LEFT'
+        elif rand < 0.5:
+            if rand>y/GRID_NUM:
+                self.direction = 'DOWN'
+            elif rand<y / GRID_NUM:
+                self.direction = 'UP'
 
     def checkEnemyCollision(self, enemy):
         for block in enemy.segments:
