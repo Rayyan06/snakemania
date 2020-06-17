@@ -21,6 +21,7 @@ from pygame.locals import (
 # Colors in the GAME
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 
 
 SCREEN_SIZE = 500
@@ -54,22 +55,22 @@ class Block:
             Map.GRID_WIDTH,
             Map.GRID_WIDTH
             ))
-
 class Snake:
-    def __init__(self, length):
-        self.length = length
+    def __init__(self, segments):
+        self.segments=segments
+
     def draw(self):
+        for segment in self.segments:
+            segment.draw()
 
-
-NewBlock = Block(2, 3, BLUE)
-
+Apple = Block(2, 3, RED)
+Player = Snake(segments=[Block(3, 4, BLUE), Block(3, 5, BLUE)])
 running = True
 
 
 while running:
-    screen.fill(BLACK)
-    NewBlock.draw()
-
+    Apple.draw()
+    Player.draw()
     # Iterate over the event list
     for event in pygame.event.get():
 
@@ -80,4 +81,5 @@ while running:
 
         elif event.type == QUIT:
             running = False
+
     pygame.display.flip()
